@@ -170,7 +170,7 @@ namespace FortranCodeNavCore.Fortran.Parser
                 return false;
             if (Char.IsLetter(c))
                 return false;
-            if (IsWhiteSpace(c))
+            if (!IsWhiteSpace(c))       //YK, 2020, correct it, as it will not give intellisense after f when has such condition, "d\t f". should I make this change???
                 return false;
             if (c == '%')
                 return false;
