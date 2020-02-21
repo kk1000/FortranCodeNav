@@ -84,7 +84,7 @@ namespace FortranCodeNavCore.Commands
                 var codeElementsInScope =
                     FortranSyntaxTreeModel.GetElementsAvailableInScope(SyntaxTreeMaintainer.GetSyntaxTrees(),
                                                                       currentMember);
-                
+
                 // are we in a 'call something' statement?
                 var callMatch = callRegex.Match(statement);
                 if (callMatch.Success)
@@ -167,6 +167,51 @@ namespace FortranCodeNavCore.Commands
                         completionItems.Add(new CompletionItem(intrinsic.Key, IntrinsicIcon) { ToolTip = intrinsic.Value });
                     }
                 }
+
+                {//YK, 2020, also add all the words already in this current file
+                    //check file content.
+                    var myFileContents = VisualStudio.GetCurrentCodeFileContent();
+
+                    {
+                        ////two methods to replace \t, \n, \r, tested and works
+                        //myFileContents = Regex.Replace(myFileContents, @"\t", " ");
+                        ////myFileContents = myFileContents.Replace("\t", " ");
+                        //myFileContents = myFileContents.Replace("\r", " ");
+                        //myFileContents = myFileContents.Replace("\n", " ");
+                    }
+
+                    {//example to remove separator...
+                        //char[] separators = new char[] { ' ', ';', ',', '\r', '\t', '\n', '(', ')', '!', ':', '=', '+', '*', '/' };
+                        //string s = "replace;multiple,characters\tin;a,c\rsharp,string";
+                        //string[] temp = s.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                        //s = String.Join("\n", temp);
+                    }
+
+                    {//example to remove duplicated string
+                        //String[] a = { "1", "1", "2", "1", "1", "3", "1", "1", };
+                        //Console.WriteLine("原数组长度:    {0}", a.Length);
+                        //Console.WriteLine("排除后数组长度:{0}", a.Distinct<string>().ToArray().Length);
+                        //Console.ReadKey();
+                    }
+
+                    char[] separators = new char[] { ' ', ';', ',', '\r', '\t', '\n', '(', ')', '!',  ':', '=', '+', '-', '*', '/', '&', '.', '\'', '<', '>', '{', '}', '[', ']', '$', '%', '?'};
+                    string s = myFileContents;                    
+                    string[] myFileContentSplittedStr = myFileContents.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                    string[] myFileContentSplittedStrDistinct = myFileContentSplittedStr.Distinct<string>().ToArray();
+                    foreach (var keyword in myFileContentSplittedStrDistinct)
+                    {
+                        //{//example to add non-duplicated string
+                        //    //if (!listString.Contains(eachString))
+                        //    //    listString.Add(eachString);
+                        //}
+
+                        completionItems.Add(new CompletionItem(keyword, null));
+                    }
+
+
+
+                }
+
                 session.SetCompletionSet(completionItems, filter);
             }
             catch (Exception e)
