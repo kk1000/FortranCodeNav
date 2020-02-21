@@ -42,8 +42,10 @@ namespace FortranCodeNavCore
             return filename.EndsWith(".f90", StringComparison.CurrentCultureIgnoreCase) ||
                    filename.EndsWith(".f95", StringComparison.CurrentCultureIgnoreCase) || //just in case it works   
                    filename.EndsWith(".f03", StringComparison.CurrentCultureIgnoreCase) || //..
-                   filename.EndsWith(".f", StringComparison.CurrentCultureIgnoreCase) ||   //..
-                   filename.EndsWith(".for", StringComparison.CurrentCultureIgnoreCase);   //..
+                   filename.EndsWith(".f", StringComparison.CurrentCultureIgnoreCase)   ||   //..
+                   filename.EndsWith(".for", StringComparison.CurrentCultureIgnoreCase) ||
+                   filename.EndsWith(".ins", StringComparison.CurrentCultureIgnoreCase)     //YK, 2020, for my specific case //..
+                   ;  
         }
 
         private static void VisualStudioClosing(object sender, EventArgs e)
