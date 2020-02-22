@@ -10,6 +10,7 @@ using EnvDTE80;
 using Microsoft.VisualStudio.TextManager.Interop;
 using IServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 
+
 namespace VSIntegration
 {
     public class VisualStudioIDE
@@ -91,13 +92,63 @@ namespace VSIntegration
             var bottom = (double) caretType.GetProperty("Bottom").GetValue(caret, null);
 
             IntPtr editorHwnd = textView.GetWindowHandle();
+
             var coordinates = new Point((int) left + 33, 5 + (int) (bottom - viewPortTop));
+            //YK, 2020.02, it is found that when the are font zoom in the visual studio, the position of the intellisense hint box will be shown in wrong location. 
+            //also, if the system display setting has "change the size of text, apps, and other items" not 100% for win 10 (through Desktop->right click->Display settings),(and win 7 also?) the position of the intellisense hint box will be shown in wrong location. 
+            //TODO: need some method to handle it. 
+
+            double PointXBase = 33 + left;
+            double PointYBase = 5 + (bottom - viewPortTop);
+
+            coordinates.X = (int)PointXBase;
+            coordinates.Y = (int)PointYBase;
 
             Native.ClientToScreen(editorHwnd, ref coordinates);
 
+            {//YK, 2020.02, handle the zoom in visual studio, tested and the result appears acceptable
+                double zoomlevel = (double)wpfViewType.GetProperty("ZoomLevel").GetValue(wpfTextView, null);
+                double zoomoffset = Math.Abs(zoomlevel - 100);
+                double zoomFactor = (zoomlevel / 100.0);
+                if (zoomoffset > 5)
+                {
+                    PointXBase = (PointXBase + zoomoffset/5.0) * zoomFactor;
+                    PointYBase = (PointYBase) * zoomFactor;
+                    coordinates.X = (int)PointXBase;
+                    coordinates.Y = (int)PointYBase;
+
+                    Native.ClientToScreen(editorHwnd, ref coordinates);
+                }
+            }
+            {//handle the system display setting zoom , tested and the result appears acceptable
+                //https://stackoverflow.com/questions/5977445/how-to-get-windows-display-settings
+
+                float dpiX, dpiY;
+                float defaultdpi = 96;  //system default 100% dpi is 96;
+                using (Graphics graphics = Graphics.FromHwnd(IntPtr.Zero))
+                {
+                    dpiX = graphics.DpiX;       //96 dpi is 100%
+                    dpiY = graphics.DpiY;
+                }
+
+                float dpioffset = Math.Abs(dpiX - defaultdpi);
+
+                if (dpioffset > 5 )
+                {
+                    PointXBase = (PointXBase + dpioffset/5.0) * (dpiX / defaultdpi);
+                    PointYBase = (PointYBase) * (dpiY / defaultdpi);
+                    coordinates.X = (int)PointXBase;
+                    coordinates.Y = (int)PointYBase;
+
+                    Native.ClientToScreen(editorHwnd, ref coordinates);
+                }
+
+            }
+
             return coordinates;
+
         }
-        
+
         public void OnConnect(DTE2 applicationObject)
         {
             ApplicationObject = applicationObject;
@@ -619,6 +670,17 @@ namespace VSIntegration
 
             var projectItem = ApplicationObject.ActiveDocument.ProjectItem;
             return GetCodeFiles().FirstOrDefault(c => IsCodeFileForProjectItem(c, projectItem));
+        }
+
+        public string GetCurrentCodeFileContent()
+        {
+            //YK: 2020, get the content of the file for the list to auto complete
+            CodeFile mycodeFile = GetCurrentCodeFile();
+            var mycontents = "";
+            mycontents = GetCodeFileContents(mycodeFile);
+
+            return mycontents;            
+
         }
 
         public Rectangle GetBounds()
