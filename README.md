@@ -4,6 +4,8 @@
 
 The latest stable release can be found in the Visual Studio marketplace here:
 https://marketplace.visualstudio.com/items?itemName=TiemenSchreuder.FortranCodeNav
+### Install this update
+Once you installed from the visual studio market, you can download this code build and than copy the dll etc. file to overwrite the file installed from the visual studio market.
 
 ### About
 
